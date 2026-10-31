@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/canonical-event.schema.json",
+  "title": "Canonical Cowrie-derived event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_uid",
+    "source",
+    "source_event_type",
+    "event_type",
+    "event_time",
+    "ingested_at",
+    "session_id",
+    "source_ip",
+    "raw_event"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "event_uid": {
+      "type": "string",
+      "pattern": "^sha256:[a-fA-F0-9]{64}$"
+    },
+    "source": {
+      "type": "string",
+      "const": "cowrie"
+    },
+    "source_event_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "session_started",
+        "session_closed",
+        "command_input",
+        "command_failed",
+        "auth_attempt",
+        "file_download",
+        "file_upload",
+        "other"
+      ]
+    },
+    "event_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ingested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_ip": {
+      "type": "string",
+      "format": "ipv4"
+    },
+    "protocol": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "ssh",
+        "telnet",
+        null
+      ]
+    },
+    "src_port": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "dst_ip": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "ipv4"
+    },
+    "dst_port": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "command": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "raw_event": {
+      "type": "object"
+    }
+  }
+}

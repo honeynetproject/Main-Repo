@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/observation.schema.json",
+  "title": "Tabular Q-learning observation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "session_id",
+    "observation_id",
+    "created_at",
+    "state_id",
+    "features"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "observation_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "state_id": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 143
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "threat_tier",
+        "session_phase",
+        "attacker_profile",
+        "behavioral_risk",
+        "engagement_depth",
+        "model_confidence"
+      ],
+      "properties": {
+        "threat_tier": {
+          "type": "string",
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ]
+        },
+        "session_phase": {
+          "type": "string",
+          "enum": [
+            "RECON",
+            "EXPLOIT",
+            "PERSIST"
+          ]
+        },
+        "attacker_profile": {
+          "type": "string",
+          "enum": [
+            "AUTOMATED",
+            "HUMAN"
+          ]
+        },
+        "behavioral_risk": {
+          "type": "string",
+          "enum": [
+            "SAFE",
+            "RISKY"
+          ]
+        },
+        "engagement_depth": {
+          "type": "string",
+          "enum": [
+            "SHALLOW",
+            "DEEP"
+          ]
+        },
+        "model_confidence": {
+          "type": "string",
+          "enum": [
+            "LOW",
+            "HIGH"
+          ]
+        }
+      }
+    }
+  }
+}

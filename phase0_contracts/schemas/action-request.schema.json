@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/action-request.schema.json",
+  "title": "RL deception action request to controller",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "decision_id", "idempotency_key", "session_id", "state_id", "action_id", "parameters", "reason_codes", "requested_at"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "1.0"},
+    "decision_id": {"type": "string", "format": "uuid"},
+    "idempotency_key": {"type": "string", "minLength": 8},
+    "session_id": {"type": "string", "minLength": 1},
+    "state_id": {"type": "integer", "minimum": 0, "maximum": 143},
+    "action_id": {"type": "integer", "minimum": 0, "maximum": 8},
+    "parameters": {"type": "object"},
+    "reason_codes": {"type": "array", "items": {"type": "string"}},
+    "requested_at": {"type": "string", "format": "date-time"}
+  }
+}

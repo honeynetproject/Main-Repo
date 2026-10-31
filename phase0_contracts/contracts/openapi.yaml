@@ -1,0 +1,263 @@
+openapi: 3.1.0
+info:
+  title: Autonomous Cyber Deception Platform API
+  version: 1.0.0
+  description: Phase 0 API contract. This describes proposed service boundaries; endpoints must be implemented and integration-tested.
+servers:
+  - url: http://ai-core:8000
+    description: Private Docker backend network; service discovery by Compose name
+paths:
+  /api/v1/health:
+    get:
+      summary: AI Core liveness and readiness
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: {type: string, enum: [ok, degraded, unavailable]}
+                  classifier_mode: {type: string, enum: [distilbert, rule_fallback, unavailable]}
+  /api/v1/status:
+    get:
+      summary: Current platform status for dashboard
+      responses:
+        '200':
+          description: Platform status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cowrie_status: {type: string}
+                  ai_core_status: {type: string}
+                  controller_status: {type: string}
+                  classifier_mode: {type: string}
+                  active_sessions: {type: integer, minimum: 0}
+  /api/v1/sessions:
+    get:
+      summary: List sessions
+      parameters:
+        - in: query
+          name: status
+          schema: {type: string, enum: [active, closed, contained, all]}
+      responses:
+        '200':
+          description: Session list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: '#/components/schemas/SessionSummary'}
+  /api/v1/sessions/{session_id}:
+    get:
+      summary: Get session detail
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Session detail
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SessionSummary'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /api/v1/sessions/{session_id}/decisions:
+    get:
+      summary: Get RL decisions for a session
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Decision history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: '#/components/schemas/ActionStatus'}
+  /api/v1/reports:
+    get:
+      summary: List generated reports
+      responses:
+        '200':
+          description: Report list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: '#/components/schemas/ReportSummary'}
+  /api/v1/reports/{report_id}/download:
+    get:
+      summary: Download generated incident report
+      parameters:
+        - in: path
+          name: report_id
+          required: true
+          schema: {type: string}
+        - in: query
+          name: format
+          required: true
+          schema: {type: string, enum: [pdf, stix]}
+      responses:
+        '200': {description: Report file}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /api/v1/actions:
+    post:
+      summary: Controller endpoint — submit allowlisted RL deception action
+      description: In deployment this path is hosted by the controller service at http://controller:9000, not by the AI Core server.
+      servers:
+        - url: http://controller:9000
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ActionRequest'}
+      responses:
+        '202':
+          description: Accepted for validation/execution; not confirmation of application
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ActionAccepted'}
+        '409': {description: Session state conflict}
+        '422': {description: Invalid action or parameters}
+        '503': {description: Controller or adapter unavailable}
+  /api/v1/actions/{decision_id}:
+    get:
+      summary: Controller endpoint — retrieve action execution status
+      servers:
+        - url: http://controller:9000
+      parameters:
+        - in: path
+          name: decision_id
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200':
+          description: Current action status
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ActionStatus'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /api/v1/containments:
+    post:
+      summary: Controller endpoint — request Safety Guard containment, independent of RL
+      servers:
+        - url: http://controller:9000
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ContainmentRequest'}
+      responses:
+        '202': {description: Containment request accepted for processing}
+        '409': {description: Session already terminal or state conflict}
+        '422': {description: Invalid source IP or evidence}
+  /internal/v1/sessions/{session_id}/actions:
+    post:
+      summary: Custom Cowrie adapter endpoint — apply one allowlisted action to one active session
+      description: This endpoint must be implemented as a custom Cowrie integration; it is not supplied by stock Cowrie. It is reachable only on the private backend network.
+      servers:
+        - url: http://cowrie:2223
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision_id, action_id, parameters]
+              properties:
+                decision_id: {type: string, format: uuid}
+                action_id: {type: integer, minimum: 0, maximum: 8}
+                parameters: {type: object}
+      responses:
+        '200':
+          description: Action applied to the specified Cowrie session
+        '404':
+          description: Session not found or no longer active
+        '422':
+          description: Unsupported action or invalid parameters
+        '503':
+          description: Cowrie control adapter unavailable
+components:
+  parameters:
+    SessionId:
+      in: path
+      name: session_id
+      required: true
+      schema: {type: string}
+  responses:
+    NotFound:
+      description: Requested record not found
+  schemas:
+    SessionSummary:
+      type: object
+      required: [session_id, source_ip, status]
+      properties:
+        session_id: {type: string}
+        source_ip: {type: string, format: ipv4}
+        started_at: {type: string, format: date-time}
+        ended_at: {type: [string, 'null'], format: date-time}
+        command_count: {type: integer, minimum: 0}
+        status: {type: string, enum: [active, closed, contained, timed_out]}
+    ActionRequest:
+      type: object
+      required: [schema_version, decision_id, idempotency_key, session_id, state_id, action_id, parameters, reason_codes, requested_at]
+      properties:
+        schema_version: {type: string, const: '1.0'}
+        decision_id: {type: string, format: uuid}
+        idempotency_key: {type: string}
+        session_id: {type: string}
+        state_id: {type: integer, minimum: 0, maximum: 143}
+        action_id: {type: integer, minimum: 0, maximum: 8}
+        parameters: {type: object}
+        reason_codes: {type: array, items: {type: string}}
+        requested_at: {type: string, format: date-time}
+    ActionAccepted:
+      type: object
+      required: [decision_id, status]
+      properties:
+        decision_id: {type: string, format: uuid}
+        status: {type: string, const: accepted}
+    ActionStatus:
+      type: object
+      required: [decision_id, status]
+      properties:
+        decision_id: {type: string, format: uuid}
+        status: {type: string, enum: [accepted, applied, rejected, failed, expired]}
+        result_code: {type: [string, 'null']}
+        result_message: {type: [string, 'null']}
+        completed_at: {type: [string, 'null'], format: date-time}
+    ContainmentRequest:
+      type: object
+      required: [request_id, idempotency_key, session_id, source_ip, trigger_code, evidence_event_uids, requested_at]
+      properties:
+        request_id: {type: string, format: uuid}
+        idempotency_key: {type: string}
+        session_id: {type: string}
+        source_ip: {type: string, format: ipv4}
+        trigger_code: {type: string}
+        risk_score: {type: [number, 'null'], minimum: 0, maximum: 1}
+        evidence_event_uids: {type: array, items: {type: string}}
+        requested_at: {type: string, format: date-time}
+    ReportSummary:
+      type: object
+      required: [report_id, session_id, status]
+      properties:
+        report_id: {type: string}
+        session_id: {type: string}
+        status: {type: string, enum: [pending, ready, failed]}
+        stix_available: {type: boolean}
+        pdf_available: {type: boolean}

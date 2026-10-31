@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/classification-result.schema.json",
+  "title": "Session classification result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "session_id", "classification_id", "command_count_total", "method", "status", "scores", "predicted_labels", "latency_ms"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "1.0"},
+    "session_id": {"type": "string", "minLength": 1},
+    "classification_id": {"type": "string", "format": "uuid"},
+    "command_count_total": {"type": "integer", "minimum": 0},
+    "commands_since_previous_classification": {"type": "integer", "minimum": 0},
+    "input_policy": {"type": "string", "enum": ["cumulative_prefix", "rolling_window"]},
+    "method": {"type": "string", "enum": ["distilbert", "rule_fallback"]},
+    "status": {"type": "string", "enum": ["ok", "uncertain", "failed"]},
+    "score_type": {"type": "string", "enum": ["model_probability", "rule_score"]},
+    "scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["Persistence", "Discovery", "Defense Evasion", "Execution", "Impact", "Other", "Harmless"],
+      "properties": {
+        "Persistence": {"type": "number", "minimum": 0, "maximum": 1},
+        "Discovery": {"type": "number", "minimum": 0, "maximum": 1},
+        "Defense Evasion": {"type": "number", "minimum": 0, "maximum": 1},
+        "Execution": {"type": "number", "minimum": 0, "maximum": 1},
+        "Impact": {"type": "number", "minimum": 0, "maximum": 1},
+        "Other": {"type": "number", "minimum": 0, "maximum": 1},
+        "Harmless": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "predicted_labels": {"type": "array", "items": {"type": "string", "enum": ["Persistence", "Discovery", "Defense Evasion", "Execution", "Impact", "Other", "Harmless"]}, "uniqueItems": true},
+    "model_version": {"type": ["string", "null"]},
+    "preprocessing_version": {"type": ["string", "null"]},
+    "fallback_reason": {"type": ["string", "null"]},
+    "latency_ms": {"type": "number", "minimum": 0}
+  }
+}
