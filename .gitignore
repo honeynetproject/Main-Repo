@@ -1,0 +1,32 @@
+# Local e
+
+local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Cowrie runtime data and logs
+/data/cowrie/var/
+
+# Application runtime state and database
+/data/app/state/
+/data/app/db/
+
+# Generated reports
+/reports/*
+!/reports/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
