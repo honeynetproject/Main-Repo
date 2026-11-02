@@ -1,0 +1,76 @@
+name: ${COMPOSE_PROJECT_NAME:-autonomous-deception}
+
+services:
+  # Phase 4 / Phase 5 first runnable service.
+  # Bind only to the Ubuntu VM's honeypot-facing NIC, never 0.0.0.0.
+  cowrie:
+    image: cowrie/cowrie:latest # Acceptable for first smoke test; pin before evaluation.
+    container_name: cowrie
+    restart: unless-stopped
+    ports:
+      - "${COWRIE_BIND_IP}:2222:2222"
+    volumes:
+      - ./data/cowrie/var:/cowrie/cowrie-git/var
+    networks:
+      - control_plane
+
+  # These three services are declared now to freeze boundaries.
+  # Their application images are built in later phases; do not start this profile yet.
+  ai-core:
+    image: ${AI_CORE_IMAGE:-autonomous-deception/ai-core:dev}
+    profiles: ["application"]
+    restart: unless-stopped
+    expose:
+      - "8000"
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      MODEL_DIR: /app/models
+      COWRIE_LOG_DIR: /data/cowrie/logs
+      STATE_DIR: /app/state
+      DATABASE_DIR: /app/db
+      REPORT_DIR: /app/reports
+    volumes:
+      - ./data/cowrie/var/log/cowrie:/data/cowrie/logs:ro
+      - ./models:/app/models:ro
+      - ./data/app/state:/app/state
+      - ./data/app/db:/app/db
+      - ./reports:/app/reports
+    networks:
+      - control_plane
+      - management_plane
+
+  controller:
+    image: ${CONTROLLER_IMAGE:-autonomous-deception/controller:dev}
+    profiles: ["application"]
+    restart: unless-stopped
+    expose:
+      - "9000"
+    environment:
+      AI_CORE_URL: http://ai-core:8000
+      COWRIE_SERVICE_NAME: cowrie
+    networks:
+      - control_plane
+
+  dashboard:
+    image: ${DASHBOARD_IMAGE:-autonomous-deception/dashboard:dev}
+    profiles: ["application"]
+    restart: unless-stopped
+    ports:
+      - "${DASHBOARD_BIND_IP}:8501:8501"
+    environment:
+      AI_CORE_API_URL: http://ai-core:8000
+    volumes:
+      - ./reports:/app/reports:ro
+    networks:
+      - management_plane
+
+networks:
+  # AI Core and Controller communicate here. Cowrie is reachable here for
+  # a future custom adapter; stock Cowrie does not provide that adapter API.
+  control_plane:
+    driver: bridge
+
+  # Dashboard reaches AI Core through this network. Internal APIs are not
+  # published as host ports.
+  management_plane:
+    driver: bridge
