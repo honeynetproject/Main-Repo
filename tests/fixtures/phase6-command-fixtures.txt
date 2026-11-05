@@ -1,0 +1,35 @@
+T01 - DISCOVERY
+id
+uname -a
+pwd
+ls -la
+cat /etc/os-release
+whoami
+
+T02 - FAILED AUTHENTICATION
+One deliberately incorrect lab credential.
+Maximum one password prompt per connection.
+
+T03 - REPEATED COMMANDS
+pwd
+pwd
+pwd
+whoami
+whoami
+id
+uname -a
+ls -la
+
+T04 - UNKNOWN COMMAND
+phase6_unknown_command_2026
+
+T05 - DISCONNECT
+whoami
+Disconnect the SSH client using the OpenSSH escape sequence.
+
+T06 - PERSISTENCE-LIKE
+crontab -l
+systemctl list-unit-files --type=service
+
+T07 - EXECUTION-LIKE
+python3 -c 'print("PHASE6_EXECUTION_MARKER")'

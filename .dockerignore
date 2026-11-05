@@ -1,0 +1,51 @@
+# Keep large artifacts, evidence and secrets out of every Docker build context.
+# The trained model is provided at runtime through the read-only volume in
+# compose.yaml (./models:/app/models:ro), never baked into an image.
+
+# VCS / tooling
+.git
+.gitignore
+.vscode/
+.idea/
+graphify-out/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+
+# Trained model, datasets and notebooks (large; mounted read-only at runtime)
+models/
+*.pth
+*.pt
+*.safetensors
+*.bin
+*.onnx
+*.npy
+*.parquet
+*.pkl
+*.joblib
+*.ipynb
+
+# Runtime data, Cowrie evidence/logs, databases, reports
+data/
+reports/
+*.db
+*.sqlite
+*.sqlite3
+*.db-wal
+*.db-shm
+
+# Docs and scratch not needed in images
+docs/
+commands.txt
+README*.md
+
+# Not needed inside images
+tests/
+deploy/

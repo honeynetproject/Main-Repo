@@ -11,7 +11,7 @@ local environment and secrets
 # Application runtime state and database
 /data/app/state/
 /data/app/db/
-
+/data/cowrie/etc/userdb.txt
 # Generated reports
 /reports/*
 !/reports/.gitkeep
@@ -30,3 +30,10 @@ venv/
 .DS_Store
 Thumbs.db
 
+
+# graphify output
+graphify-out/
+
+# Trained models, datasets and notebooks (large; provided via read-only volume)
+/models/*
+!/models/.gitkeep

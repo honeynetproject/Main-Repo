@@ -4,22 +4,42 @@ services:
   # Phase 4 / Phase 5 first runnable service.
   # Bind only to the Ubuntu VM's honeypot-facing NIC, never 0.0.0.0.
   cowrie:
-    image: cowrie/cowrie:latest # Acceptable for first smoke test; pin before evaluation.
+    # Pinned to Cowrie 3.1.5 by digest so event names/fields cannot change under us.
+    # `latest` is a moving tag; this digest is what `latest` pointed to on 2026-11-02,
+    # before the captured Phase 5/6 logs were produced. Confirm against your local pull:
+    #   sudo docker image inspect cowrie/cowrie --format '{{index .RepoDigests 0}}'
+    # To upgrade deliberately: change the digest, re-capture fixtures, re-run the tests.
+    image: cowrie/cowrie:3.1.5@sha256:797d45ca8823d313bec0994232b982f3b99412d4e68e234608d6c1f78d32e3fe
     container_name: cowrie
     restart: unless-stopped
     ports:
       - "${COWRIE_BIND_IP}:2222:2222"
     volumes:
       - ./data/cowrie/var:/cowrie/cowrie-git/var
+      - ./data/cowrie/etc:/cowrie/cowrie-git/etc:ro
     networks:
       - control_plane
 
   # These three services are declared now to freeze boundaries.
   # Their application images are built in later phases; do not start this profile yet.
   ai-core:
+    # Built from this repository: docker compose --profile application build ai-core
+    # (image names must be lowercase, e.g. autonomous-deception/ai-core:dev)
+    build:
+      context: .
+      dockerfile: ai_core/Dockerfile
     image: ${AI_CORE_IMAGE:-autonomous-deception/ai-core:dev}
     profiles: ["application"]
     restart: unless-stopped
+    # Match the host owner of ./data/app/db and ./data/app/state (default 1000:1000).
+    user: "${AI_CORE_UID:-1000}:${AI_CORE_GID:-1000}"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     expose:
       - "8000"
     environment:
@@ -31,7 +51,8 @@ services:
       REPORT_DIR: /app/reports
     volumes:
       - ./data/cowrie/var/log/cowrie:/data/cowrie/logs:ro
-      - ./models:/app/models:ro
+      # Only the trained artifacts, read-only. Not ./models, which also holds ~1.3 GB of datasets.
+      - ./models/models:/app/models:ro
       - ./data/app/state:/app/state
       - ./data/app/db:/app/db
       - ./reports:/app/reports
