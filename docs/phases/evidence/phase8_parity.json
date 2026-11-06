@@ -1,0 +1,15 @@
+{
+  "n_sessions": 500,
+  "split": "test (held out)",
+  "reference": "models/models/eval/y_pred_probs.npy",
+  "model_version": "RESCUED_checkpoint.pth@sha256:d2087f59d336150a",
+  "phase7_text_equals_training_text": "500/500",
+  "max_abs_prob_diff": 1.7881393432617188e-07,
+  "mean_abs_prob_diff": 3.0825166114872056e-09,
+  "p99_abs_prob_diff": 8.940696716308594e-08,
+  "decision_flips_at_0.5": 0,
+  "decisions_compared": 3500,
+  "rows_with_label_set_difference": 0,
+  "true_label_set_agreement_with_packaged": 0.898,
+  "worst_row_position_in_test_split": 19119
+}

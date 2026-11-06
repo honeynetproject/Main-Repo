@@ -1,0 +1,11 @@
+# Phase 8 classifier runtime (CPU). Versions are the ones the notebook venv used and the ones the
+# parity/benchmark evidence was produced with. Install torch from the CPU index:
+#   pip install --index-url https://download.pytorch.org/whl/cpu torch==2.14.0
+torch==2.14.0
+transformers==5.16.1
+tokenizers==0.23.2
+safetensors==0.8.0
+numpy==2.5.2
+# Only for scripts/phase8/* and the optional label-encoder test (not needed to serve):
+#   scikit-learn==1.9.0
+#   pyarrow

@@ -20,6 +20,7 @@ local environment and secrets
 __pycache__/
 *.py[cod]
 .venv/
+.venv-ml/
 venv/
 
 # IDE

@@ -109,7 +109,13 @@ def test_phase7_code_grants_no_shell_or_firewall_access():
 
 
 def test_phase7_does_not_import_classifier_rl_or_controller():
+    # Phase 7 ingestion must stay stdlib-only. ai_core/classifier/ is the separate Phase 8 package (it
+    # legitimately needs torch); everything else under ai_core/ must not import ML libraries, RL, the
+    # controller, or the classifier package itself.
     for p in (ROOT / "ai_core").rglob("*.py"):
+        if "classifier" in p.relative_to(ROOT / "ai_core").parts:
+            continue
         text = p.read_text()
         for bad in ("torch", "transformers", "sklearn", "distilbert", "q_learning", "controller"):
             assert not re.search(rf"^\s*(import|from)\s+{bad}", text, re.M), (p, bad)
+        assert not re.search(r"^\s*(import|from)\s+(ai_core\.classifier|\.+classifier)", text, re.M), p
